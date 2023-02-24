@@ -6,7 +6,7 @@ To play, clone repo and run the App file.
 
 ### Some things to note:
 - Parts of the game are configurable, notably the grid size itself and the amount of mines (within certain constraints).
-- There is mechanic to place flags.
+- There is no logic to place flags.
 - Revealing a single tile does not reveal surrounding "safe" tiles.
 - Revealing a single tile will display the number of mines around its (the single tile's) surrounding tiles.
 
