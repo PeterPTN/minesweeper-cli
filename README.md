@@ -2,6 +2,8 @@
 
 This is a CLI minesweeper game made in Java.
 
+To play, clone repo and run the App file.
+
 ### Some things to note:
 - Parts of the game are configurable, notably the grid size itself and the amount of mines (within certain constraints).
 - There is mechanic to place flags.
