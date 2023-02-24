@@ -1,27 +1,123 @@
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Scanner;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.stream.IntStream;
 
 public class App {
 
-  // ---- BIG PICTURE GOALS ----  
+  // ---- BIG PICTURE GOALS ----
   // TODO: Refactor to OOP standard
   // TODO: Use less procedural code somehow
 
   public static void main(String[] args) throws Exception {
-
     // DESC: State which determines if game should run
+    Timer timer = new Timer();
+    Scanner scanner = new Scanner(System.in);
+    int arrayXValue = -1;
+    int arrayYValue = -1;
+    int percentage = 0;
+
+    System.out.printf("\nMinesweeper Elite - No Flags Edition V0.1.0\n\n");
+    System.out.println("Grid setup");
+
+    // DESC: Get X value
+    while (arrayXValue < 5 || arrayXValue > 10) {
+      System.out.println(
+        "Please provide a numerical digit(s) for amount of ROWS:\n(MIN: 0, MAX: 10)"
+      );
+      arrayXValue = scanner.nextInt();
+
+      if (arrayXValue >= 5 && arrayXValue <= 10) break;
+
+      ClearTerminal();
+      System.out.println("\nINVALID INPUT");
+    }
+
+    // DESC: Get Y value
+    while (arrayYValue < 5 || arrayYValue > 20) {
+      System.out.println(
+        "Please provide a numerical digit(s) for amount of COLUMNS:\n(MIN: 0, MAX: 20)"
+      );
+      arrayYValue = scanner.nextInt();
+
+      if (arrayYValue >= 5 && arrayYValue <= 20) break;
+
+      ClearTerminal();
+      System.out.println("\nINVALID INPUT");
+    }
+
+    // DESC: Set mines based on percentage
+
+    while (percentage < 10 || percentage > 90) {
+      System.out.println(
+        "Please provide a numerical digit(s) for percentage of grid to be mines:\n(MIN: 10, MAX: 90)"
+      );
+      percentage = scanner.nextInt();
+
+      if (percentage >= 10 && percentage <= 90) break;
+
+      ClearTerminal();
+      System.out.println("\nINVALID INPUT");
+    }
+
+    double doubleTotalMines =
+      arrayXValue * arrayYValue * ((double) percentage / 100);
+    int totalMines = (int) Math.round(doubleTotalMines);
     boolean isAlive = true;
+    boolean runGame = true;
+    boolean omitCells = true;
+
+    int userX = 0;
+    int userY = 0;
+    int placedMines = 0;
+    int totalSafeCells = arrayXValue * arrayYValue - totalMines;
+    int totalSafeCellsCounter = 0;
+
+    timer.schedule(
+      new TimerTask() {
+        public void run() {
+          System.out.println("Rendering rows...");
+        }
+      },
+      250
+    );
+    Thread.sleep(250);
+
+    timer.schedule(
+      new TimerTask() {
+        public void run() {
+          System.out.println("Creating columns...");
+        }
+      },
+      500
+    );
+    Thread.sleep(500);
+
+    timer.schedule(
+      new TimerTask() {
+        public void run() {
+          System.out.println("Manufacturing mines...");
+        }
+      },
+      650
+    );
+    Thread.sleep(750);
+
+    timer.schedule(
+      new TimerTask() {
+        public void run() {
+          System.out.println("Generating grid...");
+        }
+      },
+      1000
+    );
+    Thread.sleep(1350);
+    ClearTerminal();
 
     // -------------------- GRID FOR MINES --------------------
-    boolean omitCells = true;
-    int arrayXValue = 10;
-    int arrayYValue = 10;
-
-    // DESC: Mines always 10% of grid
-    // TODO: Use user input for difficulty
-    int totalMines = arrayXValue * arrayYValue / 10;
-    int placedMines = 0;
 
     // DESC: Set grid using user info
     Cell[][] grid = new Cell[arrayXValue][arrayYValue];
@@ -67,86 +163,145 @@ public class App {
 
     // -------------------- MOCK INPUTS --------------------
 
-    // TODO: Implement user logic
-    while (isAlive) {
+    // DESC: Debugging mines
+    // System.out.print("Mine coords");
+    // coordsForMines
+    //  .stream()
+    //  .forEach(coord -> System.out.print(Arrays.toString(coord) + ", "));
 
+    System.out.printf(
+      "Your grid will be %dx%d - a total of " +
+      (arrayXValue * arrayYValue) +
+      " cells\n",
+      arrayXValue,
+      arrayYValue
+    );
+    System.out.printf("There will be a total of %d mines\n", totalMines);
+    System.out.println("Sweep fast and take chances!\n");
+    displayGrid(arrayXValue, arrayYValue, display);
+
+    while (runGame == true) {
+      System.out.println(
+        "Please enter a numerical digit(s) for the 'x' co-ordinate"
+      );
+      userX = scanner.nextInt();
+
+      System.out.println(
+        "Please enter a numerical digit(s) for the 'y' co-ordinate"
+      );
+      userY = scanner.nextInt();
+
+      isAlive = isUserStillAlive(grid, userX, userY);
+
+      if (isAlive == true) {
+        int[][] surroundingCells = getSurroundingsFromSelectedCell(
+          omitCells,
+          userX,
+          userY,
+          arrayXValue,
+          arrayYValue
+        );
+
+        int[] minesPerCell = determineAmountOfMines(
+          grid,
+          surroundingCells,
+          arrayXValue,
+          arrayYValue,
+          userX,
+          userY
+        );
+
+        updateGrid(display, surroundingCells, minesPerCell, userX, userY);
+        ClearTerminal();
+        displayGrid(arrayXValue, arrayYValue, display);
+        totalSafeCellsCounter++;
+
+        if (totalSafeCellsCounter == totalSafeCells) {
+          String[] winMessages = new String[7];
+          winMessages[0] =
+            "The field has been cleared of mines, well done! Play again? Y/N";
+          winMessages[1] =
+            "You've managed to find all the mines! Great job! Play again? Y/N";
+          winMessages[2] = "Not bad... Play again? Y/N";
+          winMessages[3] = "You're pretty good at this. Play again? Y/N";
+          winMessages[4] =
+            "Diligence and a bit of effort goes a long way, good job. Play again? Y/N";
+          winMessages[5] = "You can do better! Play again? Y/N";
+          winMessages[6] =
+            "Visit https://landminefree.org/ for more information on how to make the world a mine-free place <3\nPlay again? Y/N";
+
+          java.util.Random numGenerator = new java.util.Random();
+          int randNum = numGenerator.nextInt(winMessages.length);
+
+          System.out.printf("\n%s\n", winMessages[randNum]);
+          if (totalSafeCellsCounter > 100) {
+            System.out.println(
+              "P.S. You've matched Magawa the bomb-sniffing's rat record!"
+            );
+          }
+          String yesOrNo = scanner.next().toLowerCase();
+
+          if (yesOrNo.equals("y")) {
+            ClearTerminal();
+            rerunMain();
+          } else {
+            System.out.println("Thanks for playing!");
+            System.out.println("Exiting Application...");
+          }
+        }
+      } else if (isAlive == false) {
+        System.out.println("\n___.                          ");
+        System.out.println("\\_ |__   ____   ____   _____  ");
+        System.out.println(" | __ \\ /  _ \\ /  _ \\ /     \\ ");
+        System.out.println(" | \\_\\ (  <_> |  <_> )  Y Y  \\");
+        System.out.println(" |___  /\\____/ \\____/|__|_|  /");
+        System.out.println("     \\/                    \\/ \n");
+
+        String[] failMessages = new String[7];
+        failMessages[0] = "You lose, try again? Y/N";
+        failMessages[1] =
+          "Magawa the rat helped disable over 100 mines by smell, is a rat better than you?\nTry Again? Y/N";
+        failMessages[2] = "Better luck next time! Try again? Y/N";
+        failMessages[3] = "Maybe this isn't your thing... try again? Y/N";
+        failMessages[4] = "You're better than this! Try again! Y/N";
+        failMessages[5] = "Never be game over, try again? Y/N";
+        failMessages[6] =
+          "Visit https://landminefree.org/ for more information on how to make the world a mine-free place <3\nTry again? Y/N";
+
+        java.util.Random numGenerator = new java.util.Random();
+        int randNum = numGenerator.nextInt(failMessages.length);
+
+        System.out.printf("\n%s\n", failMessages[randNum]);
+        String yesOrNo = scanner.next().toLowerCase();
+
+        if (yesOrNo.equals("y")) {
+          ClearTerminal();
+          rerunMain();
+        } else {
+          System.out.println("Thanks for playing!");
+          System.out.println("Exiting Application...");
+        }
+      }
     }
-
-    // DESC: Debugging
-    // TODO: Display total amount of mines to player at the start
-    System.out.print("Mine coords");
-    coordsForMines
-      .stream()
-      .forEach(coord -> System.out.print(Arrays.toString(coord) + ", "));
-
-    // displayGrid(arrayXValue, arrayYValue, display);
-    int userY = 0;
-    int userX = 0;
-
-    boolean isAMine = determineIfMine(grid, userX, userY);
-
-    if (isAMine) System.out.println("YOU LOSE");
-
-    // Reveals 8 cells surrounding the args
-    int[][] surroundingCells = getSurroundingsFromSelectedCell(
-      omitCells,
-      userX,
-      userY,
-      arrayXValue,
-      arrayYValue
-    );
-    int[] minesPerCell = determineAmountOfMines(
-      grid,
-      surroundingCells,
-      arrayXValue,
-      arrayYValue
-    );
-    updateGrid(display, surroundingCells, minesPerCell, userX, userY);
-    displayGrid(arrayXValue, arrayYValue, display);
-    /* 
-    userX = 4;
-    userY = 5;
-    isAMine = determineIfMine(grid, userX, userY);
-    if (isAMine) System.out.println("YOU LOSE");
-    surroundingCells =
-      getSurroundingsFromSelectedCell(
-        omitCells,
-        userX,
-        userY,
-        arrayXValue,
-        arrayYValue
-      );
-    minesPerCell =
-      determineAmountOfMines(grid, surroundingCells, arrayXValue, arrayYValue);
-    updateGrid(display, surroundingCells, minesPerCell, userX, userY);
-    displayGrid(arrayXValue, arrayYValue, display);
-
-    userX = 1;
-    userY = 0;
-    isAMine = determineIfMine(grid, userX, userY);
-    if (isAMine) System.out.println("YOU LOSE");
-    surroundingCells =
-      getSurroundingsFromSelectedCell(
-        omitCells,
-        userX,
-        userY,
-        arrayXValue,
-        arrayYValue
-      );
-    minesPerCell =
-      determineAmountOfMines(grid, surroundingCells, arrayXValue, arrayYValue);
-    updateGrid(display, surroundingCells, minesPerCell, userX, userY);
-    displayGrid(arrayXValue, arrayYValue, display);
-*/
   }
 
   // -------------------- DETERMINE IF IT'S A MINE OR NOT --------------------
 
-  public static boolean determineIfMine(Cell[][] grid, int userX, int userY) {
+  public static void ClearTerminal() throws IOException, InterruptedException {
+    // DESC: Clear the terminal on Windows/Linus/macOS
+    new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
+  }
+
+  public static void rerunMain() throws Exception {
+    main(new String[] {});
+  }
+
+  public static boolean isUserStillAlive(Cell[][] grid, int userX, int userY) {
+    // DESC: If user input is mine they're dead
     if (grid[userX][userY].getCellType() == "mine") {
-      return true;
+      return false;
     }
-    return false;
+    return true;
   }
 
   // -------------------- GET SURROUNDING CELLS --------------------
@@ -190,7 +345,7 @@ public class App {
     };
 
     // DESC: determineAmountOfMines() passes omit = false
-    // Therefore runs default: 
+    // Therefore runs default:
     // firstIndexStarter, secondIndexStarter, arraySize and counterModifier
     if (omit) {
       int omittedValue = (int) IntStream
@@ -226,7 +381,9 @@ public class App {
           secondIndexStarter = y;
         } else if (omitTopRow == true && omitRightColumn == true) {
           firstIndexStarter = x - 1;
+          secondIndexStarter = y;
         } else if (omitBottomRow == true && omitLeftColumn == true) {
+          firstIndexStarter = x;
           secondIndexStarter = y - 1;
         } else if (omitBottomRow == true && omitRightColumn == true) {
           firstIndexStarter = x - 1;
@@ -257,7 +414,9 @@ public class App {
     Cell[][] grid,
     int[][] surroundingCells,
     int arrayXValue,
-    int arrayYValue
+    int arrayYValue,
+    int userX,
+    int userY
   ) {
     int[] minesPerCell = new int[9];
     boolean doNotOmit = false;
@@ -276,7 +435,18 @@ public class App {
       // DESC: Only keep cells within grid
       int[][] validWrapperCells = Arrays
         .stream(wrapperOfSurroundingCells)
-        .filter(arr -> arr[0] >= 0 && arr[1] >= 0)
+        .filter(arr -> {
+          if (
+            arr[0] >= 0 &&
+            arr[0] <= arrayXValue - 1 &&
+            arr[1] > 0 &&
+            arr[1] <= arrayYValue - 1
+          ) {
+            return true;
+          }
+
+          return false;
+        })
         .toArray(int[][]::new);
 
       for (int j = 0; j < validWrapperCells.length; j++) {
@@ -287,7 +457,6 @@ public class App {
         ) {
           continue;
         }
-
         // DESC: If mine increment minesPerCell array
         if (
           grid[validWrapperCells[j][0]][validWrapperCells[j][1]].getCellType() ==
@@ -306,19 +475,18 @@ public class App {
   public static void updateGrid(
     int[][] display,
     int[][] coordsArr,
-    int[] minesArr,
+    int[] mineArr,
     int userX,
     int userY
   ) {
-    // DESC: Match mineCount to surroundingCell coords 
+    // DESC: Match mineCount to surroundingCell coords
     // (surroundingCells are cells around USER chosen co-ords/input)
     for (int i = 0; i < coordsArr.length; i++) {
       if (display[coordsArr[i][0]][coordsArr[i][1]] != -1) {
-        display[coordsArr[i][0]][coordsArr[i][1]] = minesArr[i];
+        display[coordsArr[i][0]][coordsArr[i][1]] = mineArr[i];
       }
     }
-
-    // DESC: User selected input is set to -1 
+    // DESC: User selected input is set to -1
     // (-1 represents revealed + safe)
     display[userX][userY] = -1;
   }
@@ -340,7 +508,7 @@ public class App {
     System.out.println("\n\n\n");
 
     while (counter != totalCells) {
-      if (displayX == 9) {
+      if (displayX == arrayXValue - 1) {
         if (display[displayX][displayY] != -2) {
           if (display[displayX][displayY] == -1) {
             System.out.printf("|   |  %d \n", displayY);
@@ -376,8 +544,15 @@ public class App {
       displayX++;
       counter++;
     }
-    System.out.println("  |   |   |   |   |   |   |   |   |   |");
-    System.out.print("  0   1   2   3   4   5   6   7   8   9  ");
+
+    for (int i = 0; i < arrayXValue; i++) {
+      System.out.print("  | ");
+    }
     System.out.println();
+
+    for (int i = 0; i < arrayXValue; i++) {
+      System.out.printf("  %d ", i);
+    }
+    System.out.println("\n");
   }
 }
