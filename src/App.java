@@ -247,6 +247,7 @@ public class App {
           } else {
             System.out.println("Thanks for playing!");
             System.out.println("Exiting Application...");
+            scanner.close();
           }
         }
       } else if (isAlive == false) {
@@ -280,6 +281,7 @@ public class App {
         } else {
           System.out.println("Thanks for playing!");
           System.out.println("Exiting Application...");
+          scanner.close();
         }
       }
     }
